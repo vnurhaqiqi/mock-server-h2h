@@ -8,6 +8,7 @@ app.get("/h2h/transaction/:supplierCode/:productCategory", (req, res, next) => {
     const supplierCode = req.params.supplierCode;
     const productCategory = req.params.productCategory;
     const dest = req.query.dest;
+    const refID = req.query.refID;
     const path = `collection/${supplierCode}.json`;
 
     readJson(path, (err, jsonData) => {
@@ -16,18 +17,17 @@ app.get("/h2h/transaction/:supplierCode/:productCategory", (req, res, next) => {
             return res.status(500).send("internal server error");
         }
 
-        const url = jsonData["webhook"]["url"]
         const webhookObj = jsonData["webhook"]["transaction"][productCategory][dest]
         const params = {
             t: webhookObj["t"],
-            refId: webhookObj["refId"],
+            refId: refID,
             status: webhookObj["status"],
             price: webhookObj["price"],
             message: webhookObj["message"]
         }
 
         // send webhook to client async, delay 1s
-        webhook(url, params)
+        webhook(webhookObj["url"], params)
 
         const response = jsonData["transaction"][productCategory][dest]["message"]
         return res.send(response);
